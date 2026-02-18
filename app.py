@@ -14,11 +14,11 @@ st.markdown("""
     .header-title { color: #FFFFFF; font-weight: bold; margin-top: 10px; }
     .header-subtitle { color: #B79A5B; font-size: 1.1rem; }
     div.stButton > button { background-color: #1F5E8C !important; color: white !important; border: 2px solid #B79A5B !important; font-weight: bold; width: 100%; }
-    .section-title { color: #0E3A5D; font-weight: bold; border-bottom: 2px solid #B79A5B; margin-bottom: 20px; }
+    .section-title { color: #0E3A5D; font-weight: bold; border-bottom: 2px solid #B79A5B; margin-bottom: 20px; padding-top: 10px; }
 </style>
 """, unsafe_allow_html=True)
 
-# 3. Conexão Google
+# 3. Conexão Google com Limpeza de Chave
 def get_gsheet_client():
     scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
     creds_dict = st.secrets["gcp_service_account"].to_dict()
@@ -36,27 +36,27 @@ with st.container():
     st.markdown('<h1 class="header-title">Pesquisa de Satisfação</h1>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-# 5. Lógica de Navegação
+# 5. Navegação
 if 'passo' not in st.session_state:
     st.session_state.passo = 1
     st.session_state.respostas = {}
 
-# PASSO 1: GERAL
+# PASSO 1: IDENTIFICAÇÃO
 if st.session_state.passo == 1:
     with st.form("f1"):
         nome = st.text_input("Seu nome ou empresa:", placeholder="Ex: João Silva")
         st.markdown("### De 0 a 10, o quanto você recomendaria a Escrita Contabilidade para um amigo?")
         n_geral = st.select_slider("Nota:", options=list(range(11)), value=10)
         if st.form_submit_button("Próxima Etapa"):
-            if not nome: st.error("Identifique-se, por favor.")
+            if not nome: st.error("Por favor, identifique-se.")
             else:
                 st.session_state.respostas.update({'cliente': nome, 'nota_geral': n_geral})
                 st.session_state.passo = 2
                 st.rerun()
 
-# PASSO 2: ATRIBUTOS (Clareza, Prazos, etc)
+# PASSO 2: ATRIBUTOS ESTRATÉGICOS
 elif st.session_state.passo == 2:
-    st.markdown('<p class="section-title">Avaliação de Atributos</p>', unsafe_allow_html=True)
+    st.markdown('<p class="section-title">Avaliação Geral de Serviços</p>', unsafe_allow_html=True)
     with st.form("f2"):
         c1, c2 = st.columns(2)
         with c1:
@@ -75,37 +75,25 @@ elif st.session_state.passo == 2:
             st.session_state.passo = 3
             st.rerun()
 
-# PASSO 3: DEPARTAMENTOS + COMENTÁRIOS INDIVIDUAIS
+# PASSO 3: DEPARTAMENTOS (Incluindo BPO)
 elif st.session_state.passo == 3:
     st.markdown('<p class="section-title">Avaliação por Setor</p>', unsafe_allow_html=True)
     with st.form("f3"):
-        # Contábil
-        st.write("**Setor Contábil**")
-        col_n, col_t = st.columns([1, 3])
-        n_con = col_n.selectbox("Nota", list(range(11)), index=10, key="con")
-        t_con = col_t.text_input("O que podemos melhorar no Contábil? (opcional)", key="t_con")
-        st.divider()
-        
-        # Fiscal
-        st.write("**Setor Fiscal**")
-        col_n, col_t = st.columns([1, 3])
-        n_fis = col_n.selectbox("Nota", list(range(11)), index=10, key="fis")
-        t_fis = col_t.text_input("O que podemos melhorar no Fiscal? (opcional)", key="t_fis")
-        st.divider()
+        # Função interna para criar os campos repetitivos e economizar espaço
+        def campo_setor(label, key_n, key_t):
+            st.write(f"**{label}**")
+            col_n, col_t = st.columns([1, 4])
+            n = col_n.selectbox("Nota", list(range(11)), index=10, key=key_n)
+            t = col_t.text_input("O que podemos melhorar? (opcional)", key=key_t)
+            st.divider()
+            return n, t
 
-        # RH
-        st.write("**Setor RH / Pessoal**")
-        col_n, col_t = st.columns([1, 3])
-        n_rh = col_n.selectbox("Nota", list(range(11)), index=10, key="rh")
-        t_rh = col_t.text_input("O que podemos melhorar no RH? (opcional)", key="t_rh")
-        st.divider()
-
-        # Financeiro e Legal (lado a lado para encurtar)
-        st.write("**Setores Financeiro e Legal**")
-        c1, c2 = st.columns(2)
-        n_fin = c1.selectbox("Nota Financeiro", list(range(11)), index=10)
-        n_leg = c2.selectbox("Nota Legal/Societário", list(range(11)), index=10)
-        t_obs = st.text_area("Observações Gerais sobre os setores (opcional):")
+        n_con, t_con = campo_setor("Setor Contábil", "n_con", "t_con")
+        n_fis, t_fis = campo_setor("Setor Fiscal", "n_fis", "t_fis")
+        n_rh, t_rh = campo_setor("Setor RH / Pessoal", "n_rh", "t_rh")
+        n_leg, t_leg = campo_setor("Setor Legal / Societário", "n_leg", "t_leg")
+        n_fin, t_fin = campo_setor("Setor Financeiro", "n_fin", "t_fin")
+        n_bpo, t_bpo = campo_setor("Setor BPO Financeiro", "n_bpo", "t_bpo") # NOVO
 
         if st.form_submit_button("Finalizar e Enviar"):
             try:
@@ -118,18 +106,18 @@ elif st.session_state.passo == 3:
                     datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
                     resp['cliente'], resp['nota_geral'],
                     resp['clareza'], resp['prazos'], resp['comunicacao'], resp['atendimento'], resp['custo'],
-                    n_con, t_con, n_fis, t_fis, n_rh, t_rh, n_leg, "", n_fin, t_obs
+                    n_con, t_con, n_fis, t_fis, n_rh, t_rh, n_leg, t_leg, n_fin, t_fin, n_bpo, t_bpo
                 ]
                 wks.append_row(linha)
                 st.session_state.passo = 4
                 st.rerun()
             except Exception as e:
-                st.error(f"Erro técnico: {e}")
+                st.error(f"Erro ao salvar: {e}")
 
 # PASSO 4: SUCESSO
 elif st.session_state.passo == 4:
     st.balloons()
-    st.success("Sua avaliação foi enviada com sucesso! Muito obrigado.")
-    if st.button("Nova Resposta"):
+    st.success("Sua avaliação foi enviada com sucesso! A Escrita Contabilidade agradece.")
+    if st.button("Enviar outra resposta"):
         st.session_state.passo = 1
         st.rerun()
