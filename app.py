@@ -10,30 +10,20 @@ st.set_page_config(page_title="NPS Escrita Geral", page_icon="📊")
 st.markdown("""
 <style>
     .stApp { background-color: #F4F6F8; }
-    .header-container {
-        background-color: #0E3A5D;
-        padding: 1.5rem;
-        border-radius: 10px;
-        text-align: center;
-        margin-bottom: 2rem;
-    }
+    .header-container { background-color: #0E3A5D; padding: 1.5rem; border-radius: 10px; text-align: center; margin-bottom: 2rem; }
     .header-title { color: #FFFFFF; font-weight: bold; margin-top: 10px; }
     .header-subtitle { color: #B79A5B; font-size: 1.1rem; }
-    div.stButton > button {
-        background-color: #1F5E8C !important;
-        color: white !important;
-        border: 2px solid #B79A5B !important;
-        font-weight: bold;
-        width: 100%;
-    }
+    div.stButton > button { background-color: #1F5E8C !important; color: white !important; border: 2px solid #B79A5B !important; font-weight: bold; width: 100%; }
+    .section-title { color: #0E3A5D; font-weight: bold; border-bottom: 2px solid #B79A5B; margin-bottom: 20px; }
 </style>
 """, unsafe_allow_html=True)
 
-# 3. Função de Conexão
+# 3. Conexão Google
 def get_gsheet_client():
     scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-    creds_info = st.secrets["gcp_service_account"]
-    credentials = Credentials.from_service_account_info(creds_info, scopes=scope)
+    creds_dict = st.secrets["gcp_service_account"].to_dict()
+    creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
+    credentials = Credentials.from_service_account_info(creds_dict, scopes=scope)
     return gspread.authorize(credentials)
 
 # 4. Cabeçalho
@@ -43,93 +33,103 @@ with st.container():
         st.image("Logo Escrita.png", width=200)
     except:
         st.write("---")
-    st.markdown('<h1 class="header-title">Pesquisa de Satisfação Geral</h1>', unsafe_allow_html=True)
-    st.markdown('<p class="header-subtitle">Escrita Contabilidade</p>', unsafe_allow_html=True)
+    st.markdown('<h1 class="header-title">Pesquisa de Satisfação</h1>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-# 5. Lógica do App
+# 5. Lógica de Navegação
 if 'passo' not in st.session_state:
     st.session_state.passo = 1
     st.session_state.respostas = {}
 
-# PASSO 1: IDENTIFICAÇÃO E GERAL
+# PASSO 1: GERAL
 if st.session_state.passo == 1:
-    with st.form("form_geral"):
+    with st.form("f1"):
         nome = st.text_input("Seu nome ou empresa:", placeholder="Ex: João Silva")
         st.markdown("### De 0 a 10, o quanto você recomendaria a Escrita Contabilidade para um amigo?")
-        nota_geral = st.select_slider("Nota Geral:", options=list(range(11)), value=10)
-        
-        proximo = st.form_submit_button("Próxima etapa")
-        if proximo:
-            if not nome:
-                st.error("Por favor, identifique-se.")
+        n_geral = st.select_slider("Nota:", options=list(range(11)), value=10)
+        if st.form_submit_button("Próxima Etapa"):
+            if not nome: st.error("Identifique-se, por favor.")
             else:
-                st.session_state.respostas['cliente'] = nome
-                st.session_state.respostas['nota_geral'] = nota_geral
+                st.session_state.respostas.update({'cliente': nome, 'nota_geral': n_geral})
                 st.session_state.passo = 2
                 st.rerun()
 
-# PASSO 2: DEPARTAMENTOS (Incluindo Financeiro)
+# PASSO 2: ATRIBUTOS (Clareza, Prazos, etc)
 elif st.session_state.passo == 2:
-    st.info("Dê uma nota para cada setor que te atende:")
-    with st.form("form_setores"):
-        n_contabil = st.select_slider("Setor Contábil:", options=list(range(11)), value=10)
-        n_fiscal = st.select_slider("Setor Fiscal:", options=list(range(11)), value=10)
-        n_rh = st.select_slider("Setor RH / Pessoal:", options=list(range(11)), value=10)
-        n_legal = st.select_slider("Setor Legal / Societário:", options=list(range(11)), value=10)
-        n_financeiro = st.select_slider("Setor Financeiro:", options=list(range(11)), value=10) # NOVO
-        
-        proximo_2 = st.form_submit_button("Último passo")
-        if proximo_2:
+    st.markdown('<p class="section-title">Avaliação de Atributos</p>', unsafe_allow_html=True)
+    with st.form("f2"):
+        c1, c2 = st.columns(2)
+        with c1:
+            clareza = st.select_slider("Clareza nas informações:", options=list(range(11)), value=10)
+            comunicacao = st.select_slider("Qualidade da Comunicação:", options=list(range(11)), value=10)
+            custo = st.select_slider("Custo-benefício:", options=list(range(11)), value=10)
+        with c2:
+            prazos = st.select_slider("Cumprimento de Prazos:", options=list(range(11)), value=10)
+            atendimento = st.select_slider("Cordialidade no Atendimento:", options=list(range(11)), value=10)
+            
+        if st.form_submit_button("Avaliar Departamentos"):
             st.session_state.respostas.update({
-                'nota_contabil': n_contabil,
-                'nota_fiscal': n_fiscal,
-                'nota_rh': n_rh,
-                'nota_legal': n_legal,
-                'nota_financeiro': n_financeiro
+                'clareza': clareza, 'prazos': prazos, 'comunicacao': comunicacao,
+                'atendimento': atendimento, 'custo': custo
             })
             st.session_state.passo = 3
             st.rerun()
 
-# PASSO 3: COMENTÁRIO E ENVIO
+# PASSO 3: DEPARTAMENTOS + COMENTÁRIOS INDIVIDUAIS
 elif st.session_state.passo == 3:
-    with st.form("form_final"):
-        st.markdown("### Algum comentário adicional? (Opcional)")
-        comentario = st.text_area("Sua opinião:", placeholder="Opcional...", max_chars=500)
+    st.markdown('<p class="section-title">Avaliação por Setor</p>', unsafe_allow_html=True)
+    with st.form("f3"):
+        # Contábil
+        st.write("**Setor Contábil**")
+        col_n, col_t = st.columns([1, 3])
+        n_con = col_n.selectbox("Nota", list(range(11)), index=10, key="con")
+        t_con = col_t.text_input("O que podemos melhorar no Contábil? (opcional)", key="t_con")
+        st.divider()
         
-        enviar = st.form_submit_button("Enviar Resposta")
-        if enviar:
+        # Fiscal
+        st.write("**Setor Fiscal**")
+        col_n, col_t = st.columns([1, 3])
+        n_fis = col_n.selectbox("Nota", list(range(11)), index=10, key="fis")
+        t_fis = col_t.text_input("O que podemos melhorar no Fiscal? (opcional)", key="t_fis")
+        st.divider()
+
+        # RH
+        st.write("**Setor RH / Pessoal**")
+        col_n, col_t = st.columns([1, 3])
+        n_rh = col_n.selectbox("Nota", list(range(11)), index=10, key="rh")
+        t_rh = col_t.text_input("O que podemos melhorar no RH? (opcional)", key="t_rh")
+        st.divider()
+
+        # Financeiro e Legal (lado a lado para encurtar)
+        st.write("**Setores Financeiro e Legal**")
+        c1, c2 = st.columns(2)
+        n_fin = c1.selectbox("Nota Financeiro", list(range(11)), index=10)
+        n_leg = c2.selectbox("Nota Legal/Societário", list(range(11)), index=10)
+        t_obs = st.text_area("Observações Gerais sobre os setores (opcional):")
+
+        if st.form_submit_button("Finalizar e Enviar"):
             try:
                 client = get_gsheet_client()
                 sh = client.open_by_key(st.secrets["SHEET_ID"])
                 wks = sh.worksheet("respostas")
                 
-                # Dados na ordem exata das colunas da planilha (A até K)
-                dados = [
+                resp = st.session_state.respostas
+                linha = [
                     datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
-                    st.session_state.respostas['cliente'],
-                    st.session_state.respostas['nota_geral'],
-                    st.session_state.respostas['nota_contabil'],
-                    st.session_state.respostas['nota_fiscal'],
-                    st.session_state.respostas['nota_rh'],
-                    st.session_state.respostas['nota_legal'],
-                    st.session_state.respostas['nota_financeiro'], # NOVO
-                    comentario,
-                    "streamlit_app",
-                    "v2_financeiro"
+                    resp['cliente'], resp['nota_geral'],
+                    resp['clareza'], resp['prazos'], resp['comunicacao'], resp['atendimento'], resp['custo'],
+                    n_con, t_con, n_fis, t_fis, n_rh, t_rh, n_leg, "", n_fin, t_obs
                 ]
-                
-                wks.append_row(dados)
+                wks.append_row(linha)
                 st.session_state.passo = 4
                 st.rerun()
             except Exception as e:
-                st.error(f"Erro ao salvar: {e}")
+                st.error(f"Erro técnico: {e}")
 
 # PASSO 4: SUCESSO
 elif st.session_state.passo == 4:
     st.balloons()
-    st.success("Obrigado! Sua resposta foi registrada.")
-    if st.button("Enviar nova resposta"):
+    st.success("Sua avaliação foi enviada com sucesso! Muito obrigado.")
+    if st.button("Nova Resposta"):
         st.session_state.passo = 1
-        st.session_state.respostas = {}
         st.rerun()
