@@ -41,16 +41,23 @@ if 'passo' not in st.session_state:
     st.session_state.passo = 1
     st.session_state.respostas = {}
 
-# PASSO 1: IDENTIFICAÇÃO
+# PASSO 1: IDENTIFICAÇÃO (Atualizado: Nome e Empresa separados)
 if st.session_state.passo == 1:
     with st.form("f1"):
-        nome = st.text_input("Seu nome ou empresa:", placeholder="Ex: João Silva")
+        nome_contato = st.text_input("Seu nome:", placeholder="Ex: João Silva")
+        nome_empresa = st.text_input("Nome da sua empresa:", placeholder="Ex: Empresa ABC")
         st.markdown("### De 0 a 10, o quanto você recomendaria a Escrita Contabilidade para um amigo?")
         n_geral = st.select_slider("Nota:", options=list(range(11)), value=10)
+        
         if st.form_submit_button("Próxima Etapa"):
-            if not nome: st.error("Por favor, identifique-se.")
+            if not nome_contato or not nome_empresa: 
+                st.error("Por favor, preencha seu nome e o nome da empresa.")
             else:
-                st.session_state.respostas.update({'cliente': nome, 'nota_geral': n_geral})
+                st.session_state.respostas.update({
+                    'cliente': nome_contato, 
+                    'empresa': nome_empresa, 
+                    'nota_geral': n_geral
+                })
                 st.session_state.passo = 2
                 st.rerun()
 
@@ -79,7 +86,6 @@ elif st.session_state.passo == 2:
 elif st.session_state.passo == 3:
     st.markdown('<p class="section-title">Avaliação por Setor</p>', unsafe_allow_html=True)
     with st.form("f3"):
-        # Função interna para criar os campos repetitivos e economizar espaço
         def campo_setor(label, key_n, key_t):
             st.write(f"**{label}**")
             col_n, col_t = st.columns([1, 4])
@@ -93,7 +99,7 @@ elif st.session_state.passo == 3:
         n_rh, t_rh = campo_setor("Setor RH / Pessoal", "n_rh", "t_rh")
         n_leg, t_leg = campo_setor("Setor Legal / Societário", "n_leg", "t_leg")
         n_fin, t_fin = campo_setor("Setor Financeiro", "n_fin", "t_fin")
-        n_bpo, t_bpo = campo_setor("Setor BPO Financeiro", "n_bpo", "t_bpo") # NOVO
+        n_bpo, t_bpo = campo_setor("Setor BPO Financeiro", "n_bpo", "t_bpo")
 
         if st.form_submit_button("Finalizar e Enviar"):
             try:
@@ -104,7 +110,9 @@ elif st.session_state.passo == 3:
                 resp = st.session_state.respostas
                 linha = [
                     datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
-                    resp['cliente'], resp['nota_geral'],
+                    resp['cliente'], 
+                    resp['empresa'], # Novo campo inserido aqui
+                    resp['nota_geral'],
                     resp['clareza'], resp['prazos'], resp['comunicacao'], resp['atendimento'], resp['custo'],
                     n_con, t_con, n_fis, t_fis, n_rh, t_rh, n_leg, t_leg, n_fin, t_fin, n_bpo, t_bpo
                 ]
@@ -120,4 +128,5 @@ elif st.session_state.passo == 4:
     st.success("Sua avaliação foi enviada com sucesso! A Escrita Contabilidade agradece.")
     if st.button("Enviar outra resposta"):
         st.session_state.passo = 1
+        st.session_state.respostas = {} # Limpando as respostas para nova entrada
         st.rerun()
