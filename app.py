@@ -41,7 +41,7 @@ if 'passo' not in st.session_state:
     st.session_state.passo = 1
     st.session_state.respostas = {}
 
-# PASSO 1: IDENTIFICAÇÃO (Atualizado: Nome e Empresa separados)
+# PASSO 1: IDENTIFICAÇÃO (Nome e Empresa separados)
 if st.session_state.passo == 1:
     with st.form("f1"):
         nome_contato = st.text_input("Seu nome:", placeholder="Ex: João Silva")
@@ -82,7 +82,7 @@ elif st.session_state.passo == 2:
             st.session_state.passo = 3
             st.rerun()
 
-# PASSO 3: DEPARTAMENTOS (Incluindo BPO)
+# PASSO 3: DEPARTAMENTOS E FINALIZAÇÃO
 elif st.session_state.passo == 3:
     st.markdown('<p class="section-title">Avaliação por Setor</p>', unsafe_allow_html=True)
     with st.form("f3"):
@@ -101,6 +101,10 @@ elif st.session_state.passo == 3:
         n_fin, t_fin = campo_setor("Setor Financeiro", "n_fin", "t_fin")
         n_bpo, t_bpo = campo_setor("Setor BPO Financeiro", "n_bpo", "t_bpo")
 
+        # NOVA PERGUNTA: Autorização de Contato
+        st.write("**Podemos entrar em contato para falar sobre sua avaliação?**")
+        contato_autorizado = st.radio("Selecione uma opção:", ["Sim", "Não"], index=1, horizontal=True)
+
         if st.form_submit_button("Finalizar e Enviar"):
             try:
                 client = get_gsheet_client()
@@ -111,10 +115,11 @@ elif st.session_state.passo == 3:
                 linha = [
                     datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
                     resp['cliente'], 
-                    resp['empresa'], # Novo campo inserido aqui
+                    resp['empresa'],
                     resp['nota_geral'],
                     resp['clareza'], resp['prazos'], resp['comunicacao'], resp['atendimento'], resp['custo'],
-                    n_con, t_con, n_fis, t_fis, n_rh, t_rh, n_leg, t_leg, n_fin, t_fin, n_bpo, t_bpo
+                    n_con, t_con, n_fis, t_fis, n_rh, t_rh, n_leg, t_leg, n_fin, t_fin, n_bpo, t_bpo,
+                    contato_autorizado # Novo campo salvo na planilha
                 ]
                 wks.append_row(linha)
                 st.session_state.passo = 4
@@ -128,5 +133,5 @@ elif st.session_state.passo == 4:
     st.success("Sua avaliação foi enviada com sucesso! A Escrita Contabilidade agradece.")
     if st.button("Enviar outra resposta"):
         st.session_state.passo = 1
-        st.session_state.respostas = {} # Limpando as respostas para nova entrada
+        st.session_state.respostas = {}
         st.rerun()
