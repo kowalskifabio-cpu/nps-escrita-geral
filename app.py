@@ -64,6 +64,9 @@ if st.session_state.passo == 1:
         st.markdown("### De 0 a 10, o quanto você recomendaria a Escrita Contabilidade para um amigo?")
         n_geral = st.select_slider("Nota:", options=list(range(11)), value=10)
         
+        # MELHORIA: Campo de motivação
+        motivo_nota = st.text_area("O que mais motivou a sua nota?", placeholder="Conte-nos brevemente o motivo da sua avaliação...")
+        
         if st.form_submit_button("Próxima Etapa"):
             if not nome_contato or not nome_empresa: 
                 st.error("Por favor, preencha seu nome e o nome da empresa.")
@@ -71,7 +74,8 @@ if st.session_state.passo == 1:
                 st.session_state.respostas.update({
                     'cliente': nome_contato, 
                     'empresa': nome_empresa, 
-                    'nota_geral': n_geral
+                    'nota_geral': n_geral,
+                    'motivo_nota': motivo_nota
                 })
                 st.session_state.passo = 2
                 st.rerun()
@@ -101,29 +105,30 @@ elif st.session_state.passo == 2:
 elif st.session_state.passo == 3:
     st.markdown('<p class="section-title">Avaliação por Setor</p>', unsafe_allow_html=True)
     with st.form("f3"):
-        def campo_setor(label, key_n, key_t):
+        def campo_setor(label, descricao, key_n, key_t):
             st.write(f"**{label}**")
+            st.caption(descricao)
             col_n, col_t = st.columns([1, 4])
             n = col_n.selectbox("Nota", list(range(11)), index=10, key=key_n)
             t = col_t.text_input("O que podemos melhorar? (opcional)", key=key_t)
             st.divider()
             return n, t
 
-        # Setores Originais
-        n_con, t_con = campo_setor("Setor Contábil", "n_con", "t_con")
-        n_fis, t_fis = campo_setor("Setor Fiscal", "n_fis", "t_fis")
-        n_rh, t_rh = campo_setor("Setor RH / Pessoal", "n_rh", "t_rh")
-        n_leg, t_leg = campo_setor("Setor Legal / Societário", "n_leg", "t_leg")
-        n_fin, t_fin = campo_setor("Setor Financeiro", "n_fin", "t_fin")
-        n_bpo, t_bpo = campo_setor("Setor BPO Financeiro", "n_bpo", "t_bpo")
+        # Setores com descrições breves
+        n_con, t_con = campo_setor("Setor Contábil", "Responsável por lançamentos, conciliações, balancetes e demonstrações contábeis.", "n_con", "t_con")
+        n_fis, t_fis = campo_setor("Setor Fiscal", "Responsável pela apuração de impostos, escrituração fiscal e obrigações acessórias tributárias.", "n_fis", "t_fis")
+        n_rh, t_rh = campo_setor("Setor RH / Pessoal", "Responsável por folha de pagamento, admissões, férias, rescisões e encargos sociais.", "n_rh", "t_rh")
+        n_leg, t_leg = campo_setor("Setor Legal / Societário", "Responsável por aberturas, alterações contratuais, certidões e regularizações de empresas.", "n_leg", "t_leg")
+        n_fin, t_fin = campo_setor("Setor Financeiro", "Responsável pela gestão interna e faturamento da Escrita Contabilidade.", "n_fin", "t_fin")
+        n_bpo, t_bpo = campo_setor("Setor BPO Financeiro", "Responsável pela gestão terceirizada das contas a pagar/receber e fluxo de caixa de nossos clientes.", "n_bpo", "t_bpo")
         
-        # Novos Setores Solicitados
-        n_rec, t_rec = campo_setor("Recepção", "n_rec", "t_rec")
-        n_est, t_est = campo_setor("Estrutura Física", "n_est", "t_est")
-        n_csc, t_csc = campo_setor("Sucesso do Cliente (CS)", "n_csc", "t_csc")
+        n_rec, t_rec = campo_setor("Recepção", "Primeiro contato, atendimento telefônico e recebimento/entrega de documentos físicos.", "n_rec", "t_rec")
+        n_est, t_est = campo_setor("Estrutura Física", "Avaliação de nossas instalações, conforto e ambiente para reuniões presenciais.", "n_est", "t_est")
+        n_csc, t_csc = campo_setor("Sucesso do Cliente (CS)", "Responsável por garantir que suas necessidades sejam atendidas e sua experiência seja excelente.", "n_csc", "t_csc")
 
         st.write("**Podemos entrar em contato para falar sobre sua avaliação?**")
-        contato_autorizado = st.radio("Selecione uma opção:", ["Sim", "Não"], index=1, horizontal=True)
+        # MELHORIA: Flegado em "Sim" por padrão (index=0)
+        contato_autorizado = st.radio("Selecione uma opção:", ["Sim", "Não"], index=0, horizontal=True)
 
         if st.form_submit_button("Finalizar e Enviar"):
             try:
@@ -132,23 +137,24 @@ elif st.session_state.passo == 3:
                 wks = sh.worksheet("respostas")
                 
                 resp = st.session_state.respostas
-                # Linha com 28 colunas exatas conforme a tabela passada
+                # Linha atualizada com 29 colunas (Incluindo o motivo na Coluna E)
                 linha = [
-                    datetime.now().strftime("%d/%m/%Y %H:%M:%S"), # A
-                    resp['cliente'],  # B
-                    resp['empresa'],  # C
-                    resp['nota_geral'], # D
-                    resp['clareza'], resp['prazos'], resp['comunicacao'], resp['atendimento'], resp['custo'], # E, F, G, H, I
-                    n_con, t_con, # J, K
-                    n_fis, t_fis, # L, M
-                    n_rh, t_rh,   # N, O
-                    n_leg, t_leg, # P, Q
-                    n_fin, t_fin, # R, S
-                    n_bpo, t_bpo, # T, U
-                    n_rec, t_rec, # V, W
-                    n_est, t_est, # X, Y
-                    n_csc, t_csc, # Z, AA
-                    contato_autorizado # AB
+                    datetime.now().strftime("%d/%m/%Y %H:%M:%S"), # A: Timestamp
+                    resp['cliente'],    # B: Nome
+                    resp['empresa'],    # C: Empresa
+                    resp['nota_geral'],  # D: Nota NPS
+                    resp['motivo_nota'], # E: Motivação (NOVA COLUNA)
+                    resp['clareza'], resp['prazos'], resp['comunicacao'], resp['atendimento'], resp['custo'], # F, G, H, I, J
+                    n_con, t_con, # K, L
+                    n_fis, t_fis, # M, N
+                    n_rh, t_rh,   # O, P
+                    n_leg, t_leg, # Q, R
+                    n_fin, t_fin, # S, T
+                    n_bpo, t_bpo, # U, V
+                    n_rec, t_rec, # W, X
+                    n_est, t_est, # Y, Z
+                    n_csc, t_csc, # AA, AB
+                    contato_autorizado # AC
                 ]
                 wks.append_row(linha)
                 st.session_state.passo = 4
