@@ -6,15 +6,30 @@ from datetime import datetime
 # 1. Configurações da Página
 st.set_page_config(page_title="NPS Escrita Geral", page_icon="📊")
 
-# 2. CSS Personalizado
+# 2. CSS Personalizado - ATUALIZADO PARA CONTRASTE NO IPHONE
 st.markdown("""
 <style>
+    /* Fundo principal */
     .stApp { background-color: #F4F6F8; }
+    
+    /* Forçar cor do texto em todos os labels e inputs para evitar branco sobre branco */
+    label, p, span, .stMarkdown, .stTextInput label, .stSelectbox label {
+        color: #0E3A5D !important;
+    }
+    
+    /* Estilização dos campos de texto e inputs */
+    .stTextInput input {
+        color: #0E3A5D !important;
+        background-color: #FFFFFF !important;
+    }
+
     .header-container { background-color: #0E3A5D; padding: 1.5rem; border-radius: 10px; text-align: center; margin-bottom: 2rem; }
-    .header-title { color: #FFFFFF; font-weight: bold; margin-top: 10px; }
-    .header-subtitle { color: #B79A5B; font-size: 1.1rem; }
+    .header-title { color: #FFFFFF !important; font-weight: bold; margin-top: 10px; }
+    .header-subtitle { color: #B79A5B !important; font-size: 1.1rem; }
+    
     div.stButton > button { background-color: #1F5E8C !important; color: white !important; border: 2px solid #B79A5B !important; font-weight: bold; width: 100%; }
-    .section-title { color: #0E3A5D; font-weight: bold; border-bottom: 2px solid #B79A5B; margin-bottom: 20px; padding-top: 10px; }
+    
+    .section-title { color: #0E3A5D !important; font-weight: bold; border-bottom: 2px solid #B79A5B; margin-bottom: 20px; padding-top: 10px; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -101,7 +116,6 @@ elif st.session_state.passo == 3:
         n_fin, t_fin = campo_setor("Setor Financeiro", "n_fin", "t_fin")
         n_bpo, t_bpo = campo_setor("Setor BPO Financeiro", "n_bpo", "t_bpo")
 
-        # NOVA PERGUNTA: Autorização de Contato
         st.write("**Podemos entrar em contato para falar sobre sua avaliação?**")
         contato_autorizado = st.radio("Selecione uma opção:", ["Sim", "Não"], index=1, horizontal=True)
 
@@ -119,7 +133,7 @@ elif st.session_state.passo == 3:
                     resp['nota_geral'],
                     resp['clareza'], resp['prazos'], resp['comunicacao'], resp['atendimento'], resp['custo'],
                     n_con, t_con, n_fis, t_fis, n_rh, t_rh, n_leg, t_leg, n_fin, t_fin, n_bpo, t_bpo,
-                    contato_autorizado # Novo campo salvo na planilha
+                    contato_autorizado
                 ]
                 wks.append_row(linha)
                 st.session_state.passo = 4
