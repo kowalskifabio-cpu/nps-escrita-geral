@@ -109,27 +109,32 @@ elif st.session_state.passo == 3:
             st.write(f"**{label}**")
             st.caption(descricao)
             col_n, col_t = st.columns([1, 4])
-            # MELHORIA: Incluída a opção "Não se aplica" antes das notas
             opcoes_nota = ["Não se aplica"] + list(range(11))
-            n = col_n.selectbox("Nota", opcoes_nota, index=11, key=key_n) # index=11 foca no 10 por padrão
+            n = col_n.selectbox("Nota", opcoes_nota, index=11, key=key_n) 
             t = col_t.text_input("O que podemos melhorar? (opcional)", key=key_t)
             st.divider()
             return n, t
 
-        # Setores com descrições breves
+        # Setores com descrições e divisões solicitadas
         n_con, t_con = campo_setor("Setor Contábil", "Responsável por lançamentos, conciliações, balancetes e demonstrações contábeis.", "n_con", "t_con")
         n_fis, t_fis = campo_setor("Setor Fiscal", "Responsável pela apuração de impostos, escrituração fiscal e obrigações acessórias tributárias.", "n_fis", "t_fis")
-        n_rh, t_rh = campo_setor("Setor RH / Pessoal", "Responsável por folha de pagamento, admissões, férias, rescisões e encargos sociais.", "n_rh", "t_rh")
+        
+        # Divisão do RH
+        n_pes, t_pes = campo_setor("Pessoal (Folha)", "Responsável por folha de pagamento, encargos sociais e rotinas trabalhistas.", "n_pes", "t_pes")
+        n_rec, t_rec = campo_setor("Recrutamento", "Responsável por processos seletivos e contratação de talentos.", "n_rec", "t_rec")
+        
+        # Inclusão Smart
+        n_sma, t_sma = campo_setor("Setor Smart", "Responsável por soluções inteligentes, tecnologia e inovação nos processos.", "n_sma", "t_sma")
+        
         n_leg, t_leg = campo_setor("Setor Legal / Societário", "Responsável por aberturas, alterações contratuais, certidões e regularizações de empresas.", "n_leg", "t_leg")
         n_fin, t_fin = campo_setor("Setor Financeiro", "Responsável pela gestão interna e faturamento da Escrita Contabilidade.", "n_fin", "t_fin")
         n_bpo, t_bpo = campo_setor("Setor BPO Financeiro", "Responsável pela gestão terceirizada das contas a pagar/receber e fluxo de caixa de nossos clientes.", "n_bpo", "t_bpo")
         
-        n_rec, t_rec = campo_setor("Recepção", "Primeiro contato, atendimento telefônico e recebimento/entrega de documentos físicos.", "n_rec", "t_rec")
+        n_recep, t_recep = campo_setor("Recepção", "Primeiro contato, atendimento telefônico e recebimento/entrega de documentos físicos.", "n_recep", "t_recep")
         n_est, t_est = campo_setor("Estrutura Física", "Avaliação de nossas instalações, conforto e ambiente para reuniões presenciais.", "n_est", "t_est")
         n_csc, t_csc = campo_setor("Sucesso do Cliente (CS)", "Responsável por garantir que suas necessidades sejam atendidas e sua experiência seja excelente.", "n_csc", "t_csc")
 
         st.write("**Podemos entrar em contato para falar sobre sua avaliação?**")
-        # MELHORIA: Flegado em "Sim" por padrão (index=0)
         contato_autorizado = st.radio("Selecione uma opção:", ["Sim", "Não"], index=0, horizontal=True)
 
         if st.form_submit_button("Finalizar e Enviar"):
@@ -139,24 +144,26 @@ elif st.session_state.passo == 3:
                 wks = sh.worksheet("respostas")
                 
                 resp = st.session_state.respostas
-                # Linha com 29 colunas
+                # Linha atualizada com 31 colunas exatas
                 linha = [
-                    datetime.now().strftime("%d/%m/%Y %H:%M:%S"), # A: Timestamp
-                    resp['cliente'],    # B: Nome
-                    resp['empresa'],    # C: Empresa
-                    resp['nota_geral'],  # D: Nota NPS
-                    resp['motivo_nota'], # E: Motivação
+                    datetime.now().strftime("%d/%m/%Y %H:%M:%S"), # A
+                    resp['cliente'],    # B
+                    resp['empresa'],    # C
+                    resp['nota_geral'],  # D
+                    resp['motivo_nota'], # E
                     resp['clareza'], resp['prazos'], resp['comunicacao'], resp['atendimento'], resp['custo'], # F, G, H, I, J
                     n_con, t_con, # K, L
                     n_fis, t_fis, # M, N
-                    n_rh, t_rh,   # O, P
-                    n_leg, t_leg, # Q, R
-                    n_fin, t_fin, # S, T
-                    n_bpo, t_bpo, # U, V
-                    n_rec, t_rec, # W, X
-                    n_est, t_est, # Y, Z
-                    n_csc, t_csc, # AA, AB
-                    contato_autorizado # AC
+                    n_pes, t_pes, # O, P (Antigo RH)
+                    n_rec, t_rec, # Q, R (Novo Recrutamento)
+                    n_sma, t_sma, # S, T (Novo Smart)
+                    n_leg, t_leg, # U, V
+                    n_fin, t_fin, # W, X
+                    n_bpo, t_bpo, # Y, Z
+                    n_recep, t_recep, # AA, AB
+                    n_est, t_est, # AC, AD
+                    n_csc, t_csc, # AE, AF
+                    contato_autorizado # AG
                 ]
                 wks.append_row(linha)
                 st.session_state.passo = 4
