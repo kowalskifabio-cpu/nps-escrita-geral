@@ -109,7 +109,9 @@ elif st.session_state.passo == 3:
             st.write(f"**{label}**")
             st.caption(descricao)
             col_n, col_t = st.columns([1, 4])
-            n = col_n.selectbox("Nota", list(range(11)), index=10, key=key_n)
+            # MELHORIA: Incluída a opção "Não se aplica" antes das notas
+            opcoes_nota = ["Não se aplica"] + list(range(11))
+            n = col_n.selectbox("Nota", opcoes_nota, index=11, key=key_n) # index=11 foca no 10 por padrão
             t = col_t.text_input("O que podemos melhorar? (opcional)", key=key_t)
             st.divider()
             return n, t
@@ -137,13 +139,13 @@ elif st.session_state.passo == 3:
                 wks = sh.worksheet("respostas")
                 
                 resp = st.session_state.respostas
-                # Linha atualizada com 29 colunas (Incluindo o motivo na Coluna E)
+                # Linha com 29 colunas
                 linha = [
                     datetime.now().strftime("%d/%m/%Y %H:%M:%S"), # A: Timestamp
                     resp['cliente'],    # B: Nome
                     resp['empresa'],    # C: Empresa
                     resp['nota_geral'],  # D: Nota NPS
-                    resp['motivo_nota'], # E: Motivação (NOVA COLUNA)
+                    resp['motivo_nota'], # E: Motivação
                     resp['clareza'], resp['prazos'], resp['comunicacao'], resp['atendimento'], resp['custo'], # F, G, H, I, J
                     n_con, t_con, # K, L
                     n_fis, t_fis, # M, N
