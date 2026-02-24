@@ -115,16 +115,13 @@ elif st.session_state.passo == 3:
             st.divider()
             return n, t
 
-        # Setores com descrições e divisões solicitadas
+        # Setores com descrições e divisões solicitadas (Smart removido)
         n_con, t_con = campo_setor("Setor Contábil", "Responsável por lançamentos, conciliações, balancetes e demonstrações contábeis.", "n_con", "t_con")
         n_fis, t_fis = campo_setor("Setor Fiscal", "Responsável pela apuração de impostos, escrituração fiscal e obrigações acessórias tributárias.", "n_fis", "t_fis")
         
         # Divisão do RH
         n_pes, t_pes = campo_setor("Pessoal (Folha)", "Responsável por folha de pagamento, encargos sociais e rotinas trabalhistas.", "n_pes", "t_pes")
         n_rec, t_rec = campo_setor("Recrutamento", "Responsável por processos seletivos e contratação de talentos.", "n_rec", "t_rec")
-        
-        # Inclusão Smart
-        n_sma, t_sma = campo_setor("Setor Smart", "Responsável por soluções inteligentes, tecnologia e inovação nos processos.", "n_sma", "t_sma")
         
         n_leg, t_leg = campo_setor("Setor Legal / Societário", "Responsável por aberturas, alterações contratuais, certidões e regularizações de empresas.", "n_leg", "t_leg")
         n_fin, t_fin = campo_setor("Setor Financeiro", "Responsável pela gestão interna e faturamento da Escrita Contabilidade.", "n_fin", "t_fin")
@@ -144,7 +141,7 @@ elif st.session_state.passo == 3:
                 wks = sh.worksheet("respostas")
                 
                 resp = st.session_state.respostas
-                # Linha atualizada com 31 colunas exatas
+                # Linha com 31 colunas (Smart Nota e Texto removidos)
                 linha = [
                     datetime.now().strftime("%d/%m/%Y %H:%M:%S"), # A
                     resp['cliente'],    # B
@@ -154,16 +151,15 @@ elif st.session_state.passo == 3:
                     resp['clareza'], resp['prazos'], resp['comunicacao'], resp['atendimento'], resp['custo'], # F, G, H, I, J
                     n_con, t_con, # K, L
                     n_fis, t_fis, # M, N
-                    n_pes, t_pes, # O, P (Antigo RH)
-                    n_rec, t_rec, # Q, R (Novo Recrutamento)
-                    n_sma, t_sma, # S, T (Novo Smart)
-                    n_leg, t_leg, # U, V
-                    n_fin, t_fin, # W, X
-                    n_bpo, t_bpo, # Y, Z
-                    n_recep, t_recep, # AA, AB
-                    n_est, t_est, # AC, AD
-                    n_csc, t_csc, # AE, AF
-                    contato_autorizado # AG
+                    n_pes, t_pes, # O, P
+                    n_rec, t_rec, # Q, R
+                    n_leg, t_leg, # S, T
+                    n_fin, t_fin, # U, V
+                    n_bpo, t_bpo, # W, X
+                    n_recep, t_recep, # Y, Z
+                    n_est, t_est, # AA, AB
+                    n_csc, t_csc, # AC, AD
+                    contato_autorizado # AE
                 ]
                 wks.append_row(linha)
                 st.session_state.passo = 4
