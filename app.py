@@ -6,30 +6,37 @@ from datetime import datetime
 # 1. Configurações da Página
 st.set_page_config(page_title="NPS Escrita Geral", page_icon="📊")
 
-# 2. CSS Personalizado - FOCO EM CONTRASTE E IPHONE
+# 2. CSS Personalizado - CORREÇÃO DEFINITIVA PARA IPHONE E CONTRASTE
 st.markdown("""
 <style>
-    /* Fundo principal */
+    /* Fundo principal da aplicação */
     .stApp { background-color: #F4F6F8; }
     
-    /* Forçar cor do texto em todos os labels e inputs para evitar branco sobre branco */
-    label, p, span, .stMarkdown, .stTextInput label, .stSelectbox label {
+    /* Força cor do texto em labels, parágrafos e marcações Markdown */
+    label, p, span, .stMarkdown, .stTextInput label, .stSelectbox label, .stTextArea label {
         color: #0E3A5D !important;
     }
     
-    /* Estilização dos campos de texto e inputs */
-    .stTextInput input {
+    /* Fix para Inputs de Texto, Selectbox e Text Area (Crucial para iOS) */
+    input, textarea, select, .stSelectbox div[data-baseweb="select"] {
         color: #0E3A5D !important;
         background-color: #FFFFFF !important;
+        -webkit-text-fill-color: #0E3A5D !important; /* Força cor no Safari iOS */
+        opacity: 1 !important; /* Remove transparências automáticas do iOS */
     }
 
+    /* Estilização específica para o container de cabeçalho */
     .header-container { background-color: #0E3A5D; padding: 1.5rem; border-radius: 10px; text-align: center; margin-bottom: 2rem; }
     .header-title { color: #FFFFFF !important; font-weight: bold; margin-top: 10px; }
-    .header-subtitle { color: #B79A5B !important; font-size: 1.1rem; }
     
+    /* Estilização de botões */
     div.stButton > button { background-color: #1F5E8C !important; color: white !important; border: 2px solid #B79A5B !important; font-weight: bold; width: 100%; }
     
+    /* Estilização de títulos de seção */
     .section-title { color: #0E3A5D !important; font-weight: bold; border-bottom: 2px solid #B79A5B; margin-bottom: 20px; padding-top: 10px; }
+
+    /* Ajuste para legendas (captions) ficarem legíveis */
+    .stCaption { color: #555555 !important; }
 </style>
 """, unsafe_allow_html=True)
 
