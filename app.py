@@ -64,12 +64,14 @@ if st.session_state.passo == 1:
         st.markdown("### De 0 a 10, o quanto você recomendaria a Escrita Contabilidade para um amigo?")
         n_geral = st.select_slider("Nota:", options=list(range(11)), value=10)
         
-        # MELHORIA: Campo de motivação
+        # OBRIGATORIEDADE DINÂMICA
         motivo_nota = st.text_area("O que mais motivou a sua nota?", placeholder="Conte-nos brevemente o motivo da sua avaliação...")
         
         if st.form_submit_button("Próxima Etapa"):
             if not nome_contato or not nome_empresa: 
                 st.error("Por favor, preencha seu nome e o nome da empresa.")
+            elif n_geral < 7 and not motivo_nota.strip():
+                st.error("Para notas abaixo de 7, por favor, descreva o que motivou sua avaliação para que possamos melhorar.")
             else:
                 st.session_state.respostas.update({
                     'cliente': nome_contato, 
@@ -111,22 +113,17 @@ elif st.session_state.passo == 3:
             col_n, col_t = st.columns([1, 4])
             opcoes_nota = ["Não se aplica"] + list(range(11))
             n = col_n.selectbox("Nota", opcoes_nota, index=11, key=key_n) 
-            t = col_t.text_input("O que podemos melhorar? (opcional)", key=key_t)
+            t = col_t.text_input("O que podemos melhorar? (obrigatório para notas abaixo de 7)", key=key_t)
             st.divider()
             return n, t
 
-        # Setores com descrições e divisões solicitadas (Smart removido)
         n_con, t_con = campo_setor("Setor Contábil", "Responsável por lançamentos, conciliações, balancetes e demonstrações contábeis.", "n_con", "t_con")
         n_fis, t_fis = campo_setor("Setor Fiscal", "Responsável pela apuração de impostos, escrituração fiscal e obrigações acessórias tributárias.", "n_fis", "t_fis")
-        
-        # Divisão do RH
         n_pes, t_pes = campo_setor("Pessoal (Folha)", "Responsável por folha de pagamento, encargos sociais e rotinas trabalhistas.", "n_pes", "t_pes")
         n_rec, t_rec = campo_setor("Recrutamento", "Responsável por processos seletivos e contratação de talentos.", "n_rec", "t_rec")
-        
         n_leg, t_leg = campo_setor("Setor Legal / Societário", "Responsável por aberturas, alterações contratuais, certidões e regularizações de empresas.", "n_leg", "t_leg")
         n_fin, t_fin = campo_setor("Setor Financeiro", "Responsável pela gestão interna e faturamento da Escrita Contabilidade.", "n_fin", "t_fin")
         n_bpo, t_bpo = campo_setor("Setor BPO Financeiro", "Responsável pela gestão terceirizada das contas a pagar/receber e fluxo de caixa de nossos clientes.", "n_bpo", "t_bpo")
-        
         n_recep, t_recep = campo_setor("Recepção", "Primeiro contato, atendimento telefônico e recebimento/entrega de documentos físicos.", "n_recep", "t_recep")
         n_est, t_est = campo_setor("Estrutura Física", "Avaliação de nossas instalações, conforto e ambiente para reuniões presenciais.", "n_est", "t_est")
         n_csc, t_csc = campo_setor("Sucesso do Cliente (CS)", "Responsável por garantir que suas necessidades sejam atendidas e sua experiência seja excelente.", "n_csc", "t_csc")
@@ -135,37 +132,45 @@ elif st.session_state.passo == 3:
         contato_autorizado = st.radio("Selecione uma opção:", ["Sim", "Não"], index=0, horizontal=True)
 
         if st.form_submit_button("Finalizar e Enviar"):
-            try:
-                client = get_gsheet_client()
-                sh = client.open_by_key(st.secrets["SHEET_ID"])
-                wks = sh.worksheet("respostas")
-                
-                resp = st.session_state.respostas
-                # Linha com 31 colunas (Smart Nota e Texto removidos)
-                linha = [
-                    datetime.now().strftime("%d/%m/%Y %H:%M:%S"), # A
-                    resp['cliente'],    # B
-                    resp['empresa'],    # C
-                    resp['nota_geral'],  # D
-                    resp['motivo_nota'], # E
-                    resp['clareza'], resp['prazos'], resp['comunicacao'], resp['atendimento'], resp['custo'], # F, G, H, I, J
-                    n_con, t_con, # K, L
-                    n_fis, t_fis, # M, N
-                    n_pes, t_pes, # O, P
-                    n_rec, t_rec, # Q, R
-                    n_leg, t_leg, # S, T
-                    n_fin, t_fin, # U, V
-                    n_bpo, t_bpo, # W, X
-                    n_recep, t_recep, # Y, Z
-                    n_est, t_est, # AA, AB
-                    n_csc, t_csc, # AC, AD
-                    contato_autorizado # AE
-                ]
-                wks.append_row(linha)
-                st.session_state.passo = 4
-                st.rerun()
-            except Exception as e:
-                st.error(f"Erro ao salvar: {e}")
+            # VALIDAÇÃO DOS SETORES
+            setores_erro = []
+            lista_setores = [
+                (n_con, t_con, "Contábil"), (n_fis, t_fis, "Fiscal"), (n_pes, t_pes, "Pessoal"),
+                (n_rec, t_rec, "Recrutamento"), (n_leg, t_leg, "Legal"), (n_fin, t_fin, "Financeiro"),
+                (n_bpo, t_bpo, "BPO"), (n_recep, t_recep, "Recepção"), (n_est, t_est, "Estrutura"),
+                (n_csc, t_csc, "CS")
+            ]
+            
+            for nota, texto, nome in lista_setores:
+                if isinstance(nota, int) and nota < 7 and not texto.strip():
+                    setores_erro.append(nome)
+            
+            if setores_erro:
+                st.error(f"Por favor, justifique as notas baixas nos setores: {', '.join(setores_erro)}")
+            else:
+                try:
+                    client = get_gsheet_client()
+                    sh = client.open_by_key(st.secrets["SHEET_ID"])
+                    wks = sh.worksheet("respostas")
+                    
+                    resp = st.session_state.respostas
+                    linha = [
+                        datetime.now().strftime("%d/%m/%Y %H:%M:%S"), # A
+                        resp['cliente'],    # B
+                        resp['empresa'],    # C
+                        resp['nota_geral'],  # D
+                        resp['motivo_nota'], # E
+                        resp['clareza'], resp['prazos'], resp['comunicacao'], resp['atendimento'], resp['custo'], # F-J
+                        n_con, t_con, n_fis, t_fis, n_pes, t_pes, n_rec, t_rec, # K-R
+                        n_leg, t_leg, n_fin, t_fin, n_bpo, t_bpo, # S-X
+                        n_recep, t_recep, n_est, t_est, n_csc, t_csc, # Y-AD
+                        contato_autorizado # AE
+                    ]
+                    wks.append_row(linha)
+                    st.session_state.passo = 4
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Erro ao salvar: {e}")
 
 # PASSO 4: SUCESSO
 elif st.session_state.passo == 4:
