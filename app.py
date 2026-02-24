@@ -6,45 +6,58 @@ from datetime import datetime
 # 1. Configurações da Página
 st.set_page_config(page_title="NPS Escrita Geral", page_icon="📊")
 
-# 2. CSS Personalizado - CORREÇÃO BLINDADA PARA IPHONE (MODO ESCURO) E CONTRASTE
+# 2. CSS Personalizado - BLINDAGEM TOTAL PARA IPHONE (CONTRA ESCRARECIMENTO)
 st.markdown("""
 <style>
-    /* Força o navegador a entender que a página é Light Mode, ignorando o sistema */
-    :root {
-        color-scheme: light;
-    }
+    /* Força o navegador a entender que a página é Light Mode */
+    :root { color-scheme: light !important; }
 
-    /* Fundo principal da aplicação */
-    .stApp { 
-        background-color: #F4F6F8 !important; 
-    }
+    /* Fundo geral da página */
+    .stApp { background-color: #F4F6F8 !important; }
     
-    /* Força cor do texto em labels, parágrafos e marcações Markdown */
-    label, p, span, .stMarkdown, .stTextInput label, .stSelectbox label, .stTextArea label, h1, h2, h3 {
+    /* Força cor azul escuro em todos os textos da página */
+    label, p, span, .stMarkdown, .stTextInput label, .stSelectbox label, .stTextArea label, h1, h2, h3, .stHeader {
         color: #0E3A5D !important;
         -webkit-text-fill-color: #0E3A5D !important;
     }
     
-    /* Fix para Inputs de Texto, Selectbox e Text Area (Crucial para iOS Modo Escuro) */
-    input, textarea, select, .stSelectbox div[data-baseweb="select"], [data-baseweb="base-input"] {
-        color: #0E3A5D !important;
+    /* Inputs de texto e áreas de texto: Fundo branco e Letra Azul Escuro */
+    input, textarea, [data-baseweb="base-input"] {
         background-color: #FFFFFF !important;
-        -webkit-text-fill-color: #0E3A5D !important; 
+        color: #0E3A5D !important;
+        -webkit-text-fill-color: #0E3A5D !important;
+        opacity: 1 !important;
+        border: 1px solid #0E3A5D !important;
+    }
+
+    /* Selectbox (Dropdown): Fundo branco e Letra Azul Escuro */
+    div[data-baseweb="select"] {
+        background-color: #FFFFFF !important;
+        color: #0E3A5D !important;
+        -webkit-text-fill-color: #0E3A5D !important;
+    }
+
+    /* Botões: Força Fundo Azul e Texto Branco (evita o botão preto no iPhone) */
+    div.stButton > button {
+        background-color: #0E3A5D !important;
+        color: #FFFFFF !important;
+        -webkit-text-fill-color: #FFFFFF !important;
+        border: 2px solid #B79A5B !important;
+        font-weight: bold !important;
+        width: 100%;
         opacity: 1 !important;
     }
 
-    /* Estilização específica para o container de cabeçalho */
+    /* Cabeçalho */
     .header-container { background-color: #0E3A5D; padding: 1.5rem; border-radius: 10px; text-align: center; margin-bottom: 2rem; }
     .header-title { color: #FFFFFF !important; -webkit-text-fill-color: #FFFFFF !important; font-weight: bold; margin-top: 10px; }
     
-    /* Estilização de botões */
-    div.stButton > button { background-color: #1F5E8C !important; color: white !important; -webkit-text-fill-color: white !important; border: 2px solid #B79A5B !important; font-weight: bold; width: 100%; }
-    
-    /* Estilização de títulos de seção */
+    /* Seções e Legendas */
     .section-title { color: #0E3A5D !important; -webkit-text-fill-color: #0E3A5D !important; font-weight: bold; border-bottom: 2px solid #B79A5B; margin-bottom: 20px; padding-top: 10px; }
-
-    /* Ajuste para legendas (captions) ficarem legíveis */
     .stCaption { color: #555555 !important; -webkit-text-fill-color: #555555 !important; }
+
+    /* Slider: Força visibilidade das marcas */
+    .stSlider label { color: #0E3A5D !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -134,7 +147,6 @@ elif st.session_state.passo == 3:
         n_con, t_con = campo_setor("Setor Contábil", "Responsável por lançamentos, conciliações, balancetes e demonstrações contábeis.", "n_con", "t_con")
         n_fis, t_fis = campo_setor("Setor Fiscal", "Responsável pela apuração de impostos, escrituração fiscal e obrigações acessórias tributárias.", "n_fis", "t_fis")
         n_pes, t_pes = campo_setor("Pessoal (Folha)", "Responsável por folha de pagamento, encargos sociais e rotinas trabalhistas.", "n_pes", "t_pes")
-        # Setor Recrutamento Removido conforme solicitado
         n_leg, t_leg = campo_setor("Setor Legal / Societário", "Responsável por aberturas, alterações contratuais, certidões e regularizações de empresas.", "n_leg", "t_leg")
         n_fin, t_fin = campo_setor("Setor Financeiro", "Responsável pela gestão interna e faturamento da Escrita Contabilidade.", "n_fin", "t_fin")
         n_bpo, t_bpo = campo_setor("Setor BPO Financeiro", "Responsável pela gestão terceirizada das contas a pagar/receber e fluxo de caixa de nossos clientes.", "n_bpo", "t_bpo")
@@ -146,7 +158,6 @@ elif st.session_state.passo == 3:
         contato_autorizado = st.radio("Selecione uma opção:", ["Sim", "Não"], index=0, horizontal=True)
 
         if st.form_submit_button("Finalizar e Enviar"):
-            # VALIDAÇÃO DOS SETORES
             setores_erro = []
             lista_setores = [
                 (n_con, t_con, "Contábil"), (n_fis, t_fis, "Fiscal"), (n_pes, t_pes, "Pessoal"),
@@ -165,20 +176,15 @@ elif st.session_state.passo == 3:
                     client = get_gsheet_client()
                     sh = client.open_by_key(st.secrets["SHEET_ID"])
                     wks = sh.worksheet("respostas")
-                    
                     resp = st.session_state.respostas
-                    # Linha ajustada: 29 colunas no total
                     linha = [
-                        datetime.now().strftime("%d/%m/%Y %H:%M:%S"), # A
-                        resp['cliente'],    # B
-                        resp['empresa'],    # C
-                        resp['nota_geral'],  # D
-                        resp['motivo_nota'], # E
-                        resp['clareza'], resp['prazos'], resp['comunicacao'], resp['atendimento'], resp['custo'], # F-J
-                        n_con, t_con, n_fis, t_fis, n_pes, t_pes, # K-P
-                        n_leg, t_leg, n_fin, t_fin, n_bpo, t_bpo, # Q-V
-                        n_recep, t_recep, n_est, t_est, n_csc, t_csc, # W-AB
-                        contato_autorizado # AC
+                        datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+                        resp['cliente'], resp['empresa'], resp['nota_geral'], resp['motivo_nota'],
+                        resp['clareza'], resp['prazos'], resp['comunicacao'], resp['atendimento'], resp['custo'],
+                        n_con, t_con, n_fis, t_fis, n_pes, t_pes,
+                        n_leg, t_leg, n_fin, t_fin, n_bpo, t_bpo,
+                        n_recep, t_recep, n_est, t_est, n_csc, t_csc,
+                        contato_autorizado
                     ]
                     wks.append_row(linha)
                     st.session_state.passo = 4
