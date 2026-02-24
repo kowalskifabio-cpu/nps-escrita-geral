@@ -6,37 +6,45 @@ from datetime import datetime
 # 1. Configurações da Página
 st.set_page_config(page_title="NPS Escrita Geral", page_icon="📊")
 
-# 2. CSS Personalizado - CORREÇÃO DEFINITIVA PARA IPHONE E CONTRASTE
+# 2. CSS Personalizado - CORREÇÃO BLINDADA PARA IPHONE (MODO ESCURO) E CONTRASTE
 st.markdown("""
 <style>
+    /* Força o navegador a entender que a página é Light Mode, ignorando o sistema */
+    :root {
+        color-scheme: light;
+    }
+
     /* Fundo principal da aplicação */
-    .stApp { background-color: #F4F6F8; }
-    
-    /* Força cor do texto em labels, parágrafos e marcações Markdown */
-    label, p, span, .stMarkdown, .stTextInput label, .stSelectbox label, .stTextArea label {
-        color: #0E3A5D !important;
+    .stApp { 
+        background-color: #F4F6F8 !important; 
     }
     
-    /* Fix para Inputs de Texto, Selectbox e Text Area (Crucial para iOS) */
-    input, textarea, select, .stSelectbox div[data-baseweb="select"] {
+    /* Força cor do texto em labels, parágrafos e marcações Markdown */
+    label, p, span, .stMarkdown, .stTextInput label, .stSelectbox label, .stTextArea label, h1, h2, h3 {
+        color: #0E3A5D !important;
+        -webkit-text-fill-color: #0E3A5D !important;
+    }
+    
+    /* Fix para Inputs de Texto, Selectbox e Text Area (Crucial para iOS Modo Escuro) */
+    input, textarea, select, .stSelectbox div[data-baseweb="select"], [data-baseweb="base-input"] {
         color: #0E3A5D !important;
         background-color: #FFFFFF !important;
-        -webkit-text-fill-color: #0E3A5D !important; /* Força cor no Safari iOS */
-        opacity: 1 !important; /* Remove transparências automáticas do iOS */
+        -webkit-text-fill-color: #0E3A5D !important; 
+        opacity: 1 !important;
     }
 
     /* Estilização específica para o container de cabeçalho */
     .header-container { background-color: #0E3A5D; padding: 1.5rem; border-radius: 10px; text-align: center; margin-bottom: 2rem; }
-    .header-title { color: #FFFFFF !important; font-weight: bold; margin-top: 10px; }
+    .header-title { color: #FFFFFF !important; -webkit-text-fill-color: #FFFFFF !important; font-weight: bold; margin-top: 10px; }
     
     /* Estilização de botões */
-    div.stButton > button { background-color: #1F5E8C !important; color: white !important; border: 2px solid #B79A5B !important; font-weight: bold; width: 100%; }
+    div.stButton > button { background-color: #1F5E8C !important; color: white !important; -webkit-text-fill-color: white !important; border: 2px solid #B79A5B !important; font-weight: bold; width: 100%; }
     
     /* Estilização de títulos de seção */
-    .section-title { color: #0E3A5D !important; font-weight: bold; border-bottom: 2px solid #B79A5B; margin-bottom: 20px; padding-top: 10px; }
+    .section-title { color: #0E3A5D !important; -webkit-text-fill-color: #0E3A5D !important; font-weight: bold; border-bottom: 2px solid #B79A5B; margin-bottom: 20px; padding-top: 10px; }
 
     /* Ajuste para legendas (captions) ficarem legíveis */
-    .stCaption { color: #555555 !important; }
+    .stCaption { color: #555555 !important; -webkit-text-fill-color: #555555 !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -71,7 +79,6 @@ if st.session_state.passo == 1:
         st.markdown("### De 0 a 10, o quanto você recomendaria a Escrita Contabilidade para um amigo?")
         n_geral = st.select_slider("Nota:", options=list(range(11)), value=10)
         
-        # OBRIGATORIEDADE DINÂMICA
         motivo_nota = st.text_area("O que mais motivou a sua nota?", placeholder="Conte-nos brevemente o motivo da sua avaliação...")
         
         if st.form_submit_button("Próxima Etapa"):
@@ -127,7 +134,7 @@ elif st.session_state.passo == 3:
         n_con, t_con = campo_setor("Setor Contábil", "Responsável por lançamentos, conciliações, balancetes e demonstrações contábeis.", "n_con", "t_con")
         n_fis, t_fis = campo_setor("Setor Fiscal", "Responsável pela apuração de impostos, escrituração fiscal e obrigações acessórias tributárias.", "n_fis", "t_fis")
         n_pes, t_pes = campo_setor("Pessoal (Folha)", "Responsável por folha de pagamento, encargos sociais e rotinas trabalhistas.", "n_pes", "t_pes")
-        n_rec, t_rec = campo_setor("Recrutamento", "Responsável por processos seletivos e contratação de talentos.", "n_rec", "t_rec")
+        # Setor Recrutamento Removido conforme solicitado
         n_leg, t_leg = campo_setor("Setor Legal / Societário", "Responsável por aberturas, alterações contratuais, certidões e regularizações de empresas.", "n_leg", "t_leg")
         n_fin, t_fin = campo_setor("Setor Financeiro", "Responsável pela gestão interna e faturamento da Escrita Contabilidade.", "n_fin", "t_fin")
         n_bpo, t_bpo = campo_setor("Setor BPO Financeiro", "Responsável pela gestão terceirizada das contas a pagar/receber e fluxo de caixa de nossos clientes.", "n_bpo", "t_bpo")
@@ -143,9 +150,8 @@ elif st.session_state.passo == 3:
             setores_erro = []
             lista_setores = [
                 (n_con, t_con, "Contábil"), (n_fis, t_fis, "Fiscal"), (n_pes, t_pes, "Pessoal"),
-                (n_rec, t_rec, "Recrutamento"), (n_leg, t_leg, "Legal"), (n_fin, t_fin, "Financeiro"),
-                (n_bpo, t_bpo, "BPO"), (n_recep, t_recep, "Recepção"), (n_est, t_est, "Estrutura"),
-                (n_csc, t_csc, "CS")
+                (n_leg, t_leg, "Legal"), (n_fin, t_fin, "Financeiro"), (n_bpo, t_bpo, "BPO"), 
+                (n_recep, t_recep, "Recepção"), (n_est, t_est, "Estrutura"), (n_csc, t_csc, "CS")
             ]
             
             for nota, texto, nome in lista_setores:
@@ -161,6 +167,7 @@ elif st.session_state.passo == 3:
                     wks = sh.worksheet("respostas")
                     
                     resp = st.session_state.respostas
+                    # Linha ajustada: 29 colunas no total
                     linha = [
                         datetime.now().strftime("%d/%m/%Y %H:%M:%S"), # A
                         resp['cliente'],    # B
@@ -168,10 +175,10 @@ elif st.session_state.passo == 3:
                         resp['nota_geral'],  # D
                         resp['motivo_nota'], # E
                         resp['clareza'], resp['prazos'], resp['comunicacao'], resp['atendimento'], resp['custo'], # F-J
-                        n_con, t_con, n_fis, t_fis, n_pes, t_pes, n_rec, t_rec, # K-R
-                        n_leg, t_leg, n_fin, t_fin, n_bpo, t_bpo, # S-X
-                        n_recep, t_recep, n_est, t_est, n_csc, t_csc, # Y-AD
-                        contato_autorizado # AE
+                        n_con, t_con, n_fis, t_fis, n_pes, t_pes, # K-P
+                        n_leg, t_leg, n_fin, t_fin, n_bpo, t_bpo, # Q-V
+                        n_recep, t_recep, n_est, t_est, n_csc, t_csc, # W-AB
+                        contato_autorizado # AC
                     ]
                     wks.append_row(linha)
                     st.session_state.passo = 4
