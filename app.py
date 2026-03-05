@@ -6,6 +6,37 @@ from datetime import datetime
 # 1. Configurações da Página
 st.set_page_config(page_title="NPS Escrita Geral", page_icon="📊")
 
+# --- BLOCO DE SEGURANÇA VISUAL (LIMPEZA DE INTERFACE) ---
+hide_st_style = """
+            <style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            header {visibility: hidden;}
+            
+            /* Remove a barra de ferramentas (pixels e coroa) */
+            [data-testid="stToolbar"] {display: none !important;}
+            [data-testid="stStatusWidget"] {display: none !important;}
+            .stAppDeployButton {display: none !important;}
+            
+            /* Remove o selo "Made with Streamlit" e o avatar no mobile */
+            div[data-testid="stDecoration"] {display: none !important;}
+            .viewerBadge_container__1QSob {display: none !important;}
+            
+            /* Esconde os botões específicos de gerenciamento para o cliente */
+            button[title="View app status"], 
+            button[title="Manage app"],
+            div[class*="StatusWidget"] {
+                display: none !important;
+            }
+
+            /* Ajuste para mobile: remove o cabeçalho fixo branco */
+            .stApp > header {display: none !important;}
+            [data-testid="stHeader"] {display: none !important;}
+            </style>
+            """
+st.markdown(hide_st_style, unsafe_allow_html=True)
+# ------------------------------------------------------------
+
 # 2. CSS Personalizado - BLINDAGEM TOTAL PARA IPHONE (CONTRA ESCRARECIMENTO)
 st.markdown("""
 <style>
